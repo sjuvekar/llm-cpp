@@ -16,6 +16,7 @@ This project uses the following third-party libraries:
 - **xmake** - Build system
 - **libomp** - OpenMP support
 - **tiktoken-cpp** - BPE tokenizer library
+- **libtorch** - cpp implementation of torch
 
 ## Installation
 
