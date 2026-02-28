@@ -1,11 +1,12 @@
 /**
-* @file dataloader.h
+ * @file dataset.h
  * @brief C++ implementation of GPTDataset
  *
  * Dependencies:
- * - cpp-tiktoken: BPE tokenizer compatible with GPT models
+ * - libtorch: PyTorch C++ API for tensors
+ * - ITokenizer: Abstract tokenizer interface
  *
- * @author Sudeep Juvekar (sjuvekar@gmail.com).
+ * @author Sudeep Juvekar (sjuvekar@gmail.com)
  */
 #ifndef LLMS_FROM_SCRATCH_DATASET_H
 #define LLMS_FROM_SCRATCH_DATASET_H
@@ -15,8 +16,11 @@
 #include <string>
 #include <unordered_set>
 #include <vector>
+#include <memory>
+#include "tokenizer.h"
 
 namespace llm {
+
 /**
  * @class GPTDataset
  * @brief Dataset class that creates overlapping input/target sequences from text
@@ -37,12 +41,12 @@ namespace llm {
 class GPTDataset : public torch::data::Dataset<GPTDataset> {
 public:
     /**
-     * @brief Construct a GPTDataset from text
+     * @brief Construct a GPTDataset with a custom tokenizer
      *
      * @param txt The raw text to tokenize and create sequences from
      * @param window_length The length of each sequence (context length)
      * @param stride The step size for the sliding window (overlap = window_length - stride)
-     * @param language_model Language model used for GPT encoding
+     * @param tokenizer Tokenizer to use for encoding text
      * @param allowed_special allowed special characters during encoding
      *
      * @throws std::runtime_error if text is too short for window_length
@@ -51,7 +55,7 @@ public:
         const std::string& txt,
         int64_t window_length,
         int64_t stride,
-        LanguageModel language_model,
+        std::shared_ptr<ITokenizer> tokenizer,
         const std::unordered_set<std::string>& allowed_special = {}
     );
 
@@ -72,16 +76,18 @@ public:
         return input_ids_.size();
     }
 
-    private:
-        void build_dataset();
+private:
+    void build_dataset();
 
-        int64_t window_length_;                     ///< Context length
-        int64_t stride_;                            ///< Sliding window step size
-        std::shared_ptr<GptEncoding> gpt_encoding_; ///< Tokenizer
-        std::vector<int> token_ids_;                ///< All token IDs from the text
-        std::vector<torch::Tensor> input_ids_;      ///< Input sequences
-        std::vector<torch::Tensor> target_ids_;     ///< Target sequences (shifted by 1)
+    int64_t window_length_;                           ///< Context length
+    int64_t stride_;                                  ///< Sliding window step size
+    std::shared_ptr<ITokenizer> tokenizer_;           ///< Tokenizer interface
+    std::unordered_set<std::string> allowed_special_; ///< Special tokens
+    std::vector<int> token_ids_;                      ///< All token IDs from the text
+    std::vector<torch::Tensor> input_ids_;            ///< Input sequences
+    std::vector<torch::Tensor> target_ids_;           ///< Target sequences (shifted by 1)
 };
-    
-}
+
+} // namespace llm
+
 #endif //LLMS_FROM_SCRATCH_DATASET_H

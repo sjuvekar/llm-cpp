@@ -15,6 +15,7 @@
 #pragma once
 
 #include "dataset.h"
+#include "tokenizer.h"
 
 #include <torch/torch.h>
 #include <tiktoken/encoding.h>
@@ -82,8 +83,11 @@ inline std::unique_ptr<
     >
 >
 create_dataloader(const std::string& txt, const DataLoaderConfig& config = {}) {
+    // Create the tokenizer
+    auto tokenizer = create_tiktoken_tokenizer(config.language_model);
+
     // Create the dataset
-    auto dataset = GPTDataset(txt, config.max_length, config.stride, config.language_model)
+    auto dataset = GPTDataset(txt, config.max_length, config.stride, tokenizer)
         .map(torch::data::transforms::Stack<>());
 
     // Create the dataloader
