@@ -128,6 +128,7 @@ target("llm-cli")
     add_files("src/main.cpp")
     add_deps("llm-core")
     add_packages("libtorch")
+    set_rundir(".")
 
     -- Static CRT for MSVC
     if is_plat("windows") then

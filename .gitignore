@@ -1,0 +1,14 @@
+.idea/
+
+# vscode
+.vscode/
+
+# xmake
+*.xmake
+
+# Third party
+thirdparty
+
+# build dirs
+build
+macosx
