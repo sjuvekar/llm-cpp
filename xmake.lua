@@ -80,7 +80,7 @@ add_requires("libtorch", {configs = {cuda = false}})  -- Set cuda=true for GPU s
 -- 3. Uncomment the add_includedirs and add_links below
 
 -- Optional development packages
-add_requires("gtest", {optional = true})  -- Google Test framework
+add_requires("gtest", {configs = {main = true}})  -- Google Test framework
 add_requires("spdlog", {optional = true}) -- Fast logging library
 
 -- ============================================================================
@@ -139,19 +139,16 @@ target_end()
 -- ============================================================================
 -- Test Target
 -- ============================================================================
-target("tests")
+target("unit_tests")
     set_kind("binary")
-    set_default(false)  -- Build explicitly: xmake build tests
-
-    add_files("tests/*.cpp")
+    
+    add_packages("gtest")
+    
     add_deps("llm-core")
+
     add_packages("libtorch")
-    add_includedirs("include", {public = true})
+    
+    add_files("tests/*.cpp")
+    add_tests("tests/*.cpp")
 
-    -- Use GoogleTest if available
-    if has_package("gtest") then
-        add_packages("gtest")
-    end
-
-    add_defines("LLM_TEST_MODE")
 target_end()
