@@ -151,4 +151,6 @@ target("unit_tests")
     add_files("tests/*.cpp")
     add_tests("tests/*.cpp")
 
+     set_rundir(".")
+
 target_end()
