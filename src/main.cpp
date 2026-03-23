@@ -1,3 +1,4 @@
+#include "attention.h"
 #include "dataloader.h"
 #include "embedding.h"
 
@@ -8,6 +9,7 @@ int main() {
     constexpr int64_t vocab_size     = 50257; // r50k_base vocabulary
     constexpr int64_t context_length = 256;   // positional table size
     constexpr int64_t emb_dim        = 768;   // GPT-2 small hidden size
+    constexpr int64_t num_heads      = 12;    // GPT-2 small attention heads
     constexpr int64_t batch_size     = 2;
     constexpr int64_t max_length     = 16;    // tokens per sample
     constexpr int64_t stride         = 16;    // no overlap between samples
@@ -69,5 +71,38 @@ int main() {
         std::cout << "First token vec  : " << embeddings[0][0].slice(0, 0, 8) << " ...\n";
 
         break; // one batch is enough for the demo
+    }
+
+    // -------------------------------------------------------------------------
+    // Attention layer
+    // -------------------------------------------------------------------------
+    auto attn = llm::CausalSelfAttention(emb_dim, num_heads, context_length,
+                                         /*dropout=*/0.0, /*qkv_bias=*/false);
+    attn.eval();
+
+    std::cout << "\nCausalSelfAttention parameters:\n"
+              << "  embedding_dim  : " << emb_dim      << "\n"
+              << "  num_heads      : " << num_heads     << "\n"
+              << "  head_dim       : " << emb_dim / num_heads << "\n"
+              << "  context_length : " << context_length << "\n\n";
+
+    // -------------------------------------------------------------------------
+    // Forward pass: embeddings -> attention
+    // -------------------------------------------------------------------------
+    // Re-run one batch to get embeddings, then feed them into attention.
+    for (auto& batch : *dataloader) {
+        auto token_ids = batch.data; // [batch_size, max_length]
+
+        torch::NoGradGuard no_grad;
+        auto embeddings = embedding.forward(token_ids); // [batch, seq, emb_dim]
+        auto attn_out   = attn.forward(embeddings);     // [batch, seq, emb_dim]
+
+        std::cout << "Attention input  shape : " << embeddings.sizes() << "\n";
+        std::cout << "Attention output shape : " << attn_out.sizes()   << "\n";
+        std::cout << "Attention output dtype : " << attn_out.dtype()   << "\n";
+        std::cout << "First token vec        : "
+                  << attn_out[0][0].slice(0, 0, 8) << " ...\n";
+
+        break;
     }
 }
